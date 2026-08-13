@@ -1,0 +1,54 @@
+{
+  "name": "homebridge-sector-alarm",
+  "displayName": "Sector Alarm",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Homebridge plugin for Sector Alarm (Mes Pages), including France.",
+  "author": "Franck Boucher",
+  "license": "MIT",
+  "homepage": "https://github.com/franck-boucher/homebridge-sector-alarm#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/franck-boucher/homebridge-sector-alarm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/franck-boucher/homebridge-sector-alarm/issues"
+  },
+  "keywords": [
+    "homebridge-plugin",
+    "supports-hap",
+    "sector",
+    "sector-alarm",
+    "security-system",
+    "homekit"
+  ],
+  "main": "dist/index.js",
+  "files": [
+    "LICENSE",
+    "README.md",
+    "config.schema.json",
+    "dist"
+  ],
+  "engines": {
+    "node": "^22.10.0 || ^24.0.0",
+    "homebridge": "^1.8.0 || ^2.0.0"
+  },
+  "scripts": {
+    "build": "rimraf ./dist && tsc",
+    "lint": "eslint . --max-warnings=0",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run lint && npm run build",
+    "watch": "npm run build && npm link && nodemon"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.6.0",
+    "eslint": "^10.3.0",
+    "homebridge": "^2.0.0",
+    "nodemon": "^3.1.14",
+    "rimraf": "^6.1.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.2"
+  }
+}

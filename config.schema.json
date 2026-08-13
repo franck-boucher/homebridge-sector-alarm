@@ -1,0 +1,69 @@
+{
+  "pluginAlias": "SectorAlarm",
+  "pluginType": "platform",
+  "singular": true,
+  "strictValidation": true,
+  "schema": {
+    "type": "object",
+    "required": ["name", "email", "password", "code"],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "Sector Alarm",
+        "description": "Name shown in Homebridge."
+      },
+      "email": {
+        "title": "Email",
+        "type": "string",
+        "format": "email",
+        "description": "Mes Pages / My Pages email (sectoralarm.fr, sectoralarm.net, …)."
+      },
+      "password": {
+        "title": "Password",
+        "type": "string",
+        "description": "Mes Pages password (not the keypad PIN).",
+        "placeholder": "password"
+      },
+      "code": {
+        "title": "Panel code",
+        "type": "string",
+        "description": "Keypad / panel PIN used to arm, disarm, lock and unlock."
+      },
+      "panelId": {
+        "title": "Panel ID",
+        "type": "string",
+        "description": "Optional. Leave empty if you have a single site; required if several panels are on the account."
+      },
+      "pollInterval": {
+        "title": "Poll interval (seconds)",
+        "type": "integer",
+        "default": 60,
+        "minimum": 15,
+        "maximum": 600,
+        "description": "How often to refresh alarm, sensors, plugs and locks. Default 60s."
+      },
+      "exposeSensors": {
+        "title": "Expose door / window sensors",
+        "type": "boolean",
+        "default": true
+      },
+      "exposePlugs": {
+        "title": "Expose smart plugs",
+        "type": "boolean",
+        "default": true
+      },
+      "exposeLocks": {
+        "title": "Expose smart locks",
+        "type": "boolean",
+        "default": true
+      },
+      "exposeClimate": {
+        "title": "Expose temperature and humidity",
+        "type": "boolean",
+        "default": true
+      }
+    }
+  }
+}

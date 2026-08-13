@@ -1,0 +1,39 @@
+# Ignore source code
+src
+
+# gitHub actions
+.github
+
+# eslint
+eslint.config.js
+
+# typescript
+tsconfig.json
+
+# vscode
+.vscode
+
+# nodemon
+nodemon.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+
+# Dependency directories
+node_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# dotenv
+.env
+.env.test
+
+test/
