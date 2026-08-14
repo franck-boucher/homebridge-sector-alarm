@@ -1,7 +1,13 @@
 import type { CharacteristicValue, PlatformAccessory } from 'homebridge';
 
 import type { SectorPlatform } from '../platform.js';
-import { homeKitTargetToArmMode, HomeKitAlarmState, sectorStatusToCurrentState } from '../mapping.js';
+import {
+  HomeKitAlarmState,
+  homeKitTargetToArmMode,
+  homeKitValidCurrentStates,
+  homeKitValidTargetStates,
+  sectorStatusToCurrentState,
+} from '../mapping.js';
 import { MANUFACTURER } from '../settings.js';
 
 export class AlarmAccessory {
@@ -24,24 +30,15 @@ export class AlarmAccessory {
 
     service.setCharacteristic(Characteristic.Name, this.accessory.displayName);
 
-    const validTargets = alarm?.canPartialArm
-      ? [
-        Characteristic.SecuritySystemTargetState.STAY_ARM,
-        Characteristic.SecuritySystemTargetState.AWAY_ARM,
-        Characteristic.SecuritySystemTargetState.NIGHT_ARM,
-        Characteristic.SecuritySystemTargetState.DISARM,
-      ]
-      : [
-        Characteristic.SecuritySystemTargetState.AWAY_ARM,
-        Characteristic.SecuritySystemTargetState.DISARM,
-      ];
+    const canPartialArm = alarm?.canPartialArm === true;
 
     service.getCharacteristic(Characteristic.SecuritySystemTargetState)
-      .setProps({ validValues: validTargets })
+      .setProps({ validValues: homeKitValidTargetStates(canPartialArm) })
       .onGet(this.getTargetState.bind(this))
       .onSet(this.setTargetState.bind(this));
 
     service.getCharacteristic(Characteristic.SecuritySystemCurrentState)
+      .setProps({ validValues: homeKitValidCurrentStates(canPartialArm) })
       .onGet(this.getCurrentState.bind(this));
 
     this.platform.coordinator.onUpdate(() => this.pushState());
