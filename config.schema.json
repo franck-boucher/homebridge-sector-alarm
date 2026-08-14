@@ -75,7 +75,7 @@
         "title": "Allow HomeKit to disarm",
         "type": "boolean",
         "default": true,
-        "description": "If disabled, HomeKit can still arm and show status, but cannot disarm. Does not protect against someone who can read the Homebridge config file."
+        "description": "If disabled, HomeKit disarm commands are rejected. Off is still shown when the panel is disarmed (for example from the keypad). Does not protect against someone who can read the Homebridge config file."
       },
       "allowLockControl": {
         "title": "Allow HomeKit to lock / unlock",

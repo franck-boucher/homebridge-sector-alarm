@@ -1,7 +1,13 @@
 import type { CharacteristicValue, PlatformAccessory } from 'homebridge';
 
 import type { SectorPlatform } from '../platform.js';
-import { homeKitTargetToArmMode, HomeKitAlarmState, sectorStatusToCurrentState } from '../mapping.js';
+import {
+  homeKitReportedTargetState,
+  homeKitTargetToArmMode,
+  HomeKitAlarmState,
+  sectorStatusToCurrentState,
+  securitySystemTargetValidValues,
+} from '../mapping.js';
 import { MANUFACTURER } from '../settings.js';
 
 export class AlarmAccessory {
@@ -24,21 +30,8 @@ export class AlarmAccessory {
 
     service.setCharacteristic(Characteristic.Name, this.accessory.displayName);
 
-    const validTargets = alarm?.canPartialArm
-      ? [
-        Characteristic.SecuritySystemTargetState.STAY_ARM,
-        Characteristic.SecuritySystemTargetState.AWAY_ARM,
-        Characteristic.SecuritySystemTargetState.NIGHT_ARM,
-      ]
-      : [
-        Characteristic.SecuritySystemTargetState.AWAY_ARM,
-      ];
-    if (this.platform.config.allowDisarm) {
-      validTargets.push(Characteristic.SecuritySystemTargetState.DISARM);
-    }
-
     service.getCharacteristic(Characteristic.SecuritySystemTargetState)
-      .setProps({ validValues: validTargets })
+      .setProps({ validValues: securitySystemTargetValidValues(Boolean(alarm?.canPartialArm)) })
       .onGet(this.getTargetState.bind(this))
       .onSet(this.setTargetState.bind(this));
 
@@ -54,8 +47,7 @@ export class AlarmAccessory {
   }
 
   private getTargetState(): CharacteristicValue {
-    const current = this.readState();
-    return current === HomeKitAlarmState.AlarmTriggered ? HomeKitAlarmState.AwayArm : current;
+    return homeKitReportedTargetState(this.readState());
   }
 
   private async setTargetState(value: CharacteristicValue): Promise<void> {
@@ -120,9 +112,10 @@ export class AlarmAccessory {
       return;
     }
     const current = this.readState();
+    const target = homeKitReportedTargetState(current);
     service.updateCharacteristic(Characteristic.SecuritySystemCurrentState, current);
     if (current !== HomeKitAlarmState.AlarmTriggered) {
-      service.updateCharacteristic(Characteristic.SecuritySystemTargetState, current);
+      service.updateCharacteristic(Characteristic.SecuritySystemTargetState, target);
     }
     service.updateCharacteristic(
       Characteristic.StatusFault,

@@ -113,7 +113,7 @@ Puis, dans le dossier Homebridge (`/var/lib/homebridge` sur le Pi) : `npm link h
 | `exposePlugs` | non | Prises connectées (défaut `true`) |
 | `exposeLocks` | non | Serrures (défaut `true`) |
 | `exposeClimate` | non | Température / humidité (défaut `true`, poll 15 min) |
-| `allowDisarm` | non | Autoriser HomeKit à désarmer (défaut `true`). Mettre `false` pour n’autoriser que l’armement / le statut. |
+| `allowDisarm` | non | Autoriser HomeKit à désarmer (défaut `true`). `false` refuse la commande Désarmer ; l’état Off reste affiché si on désarme au clavier. |
 | `allowLockControl` | non | Autoriser HomeKit à verrouiller / déverrouiller (défaut `true`) |
 
 ## Accessoires HomeKit

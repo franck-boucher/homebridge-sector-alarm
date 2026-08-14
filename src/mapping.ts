@@ -51,6 +51,36 @@ export function homeKitTargetToArmMode(target: number): 'full' | 'partial' | 'di
   }
 }
 
+/**
+ * TargetState cannot be ALARM_TRIGGERED. A disarmed panel must still report
+ * DISARMED so HomeKit does not keep an arm target after a keypad Off.
+ */
+export function homeKitReportedTargetState(current: number): number {
+  return current === HomeKitAlarmState.AlarmTriggered
+    ? HomeKitAlarmState.AwayArm
+    : current;
+}
+
+/**
+ * HAP drops TargetState updates that are not in validValues.
+ * DISARM must stay listed so status-only mode can publish Off; allowDisarm
+ * only rejects HomeKit disarm writes.
+ */
+export function securitySystemTargetValidValues(canPartialArm: boolean): number[] {
+  if (canPartialArm) {
+    return [
+      HomeKitAlarmState.StayArm,
+      HomeKitAlarmState.AwayArm,
+      HomeKitAlarmState.NightArm,
+      HomeKitAlarmState.Disarmed,
+    ];
+  }
+  return [
+    HomeKitAlarmState.AwayArm,
+    HomeKitAlarmState.Disarmed,
+  ];
+}
+
 export function parseNumber(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
