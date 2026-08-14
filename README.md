@@ -16,33 +16,46 @@ Inspiré de l’intégration Home Assistant [gjohansson-ST/sector](https://githu
 
 **Tu n’as pas besoin de publier le plugin sur npm** pour l’utiliser chez toi. Publier sur npm sert seulement à le faire apparaître dans la recherche de l’onglet Plugins pour tout le monde.
 
-### Sur une Raspberry Pi (Homebridge officiel)
-
-Homebridge (image officielle ou paquet `apt`) installe les plugins avec `hb-service`, pas avec `npm install -g`. Les plugins vont dans `/var/lib/homebridge/node_modules`.
-
-**1. Installer depuis GitHub**
-
-Dans l’UI Homebridge : Developer Tools → Terminal (sans `sudo`) :
+`hb-service add` **n’accepte pas** une source GitHub (`github:user/repo`, une URL, un fichier `.tgz`). Il ne prend qu’un nom de paquet npm du type `homebridge-…`, puis l’installe depuis le registre npm. D’où l’erreur `Invalid plugin name` si tu lances :
 
 ```bash
 hb-service add github:franck-boucher/homebridge-sector-alarm
 ```
 
-Ou en SSH :
+Tant que le plugin n’est pas publié sur npm, installe-le avec `npm` dans le dossier Homebridge, via `hb-shell` (le Node de Homebridge, `/opt/homebridge`).
+
+### Sur une Raspberry Pi (Homebridge officiel)
+
+Les plugins vont dans `/var/lib/homebridge/node_modules`. Vérifie dans l’UI (carte Status) que Node.js est en **22** ou **24** — c’est ce que le plugin exige.
+
+**1. Installer depuis GitHub**
+
+En SSH :
 
 ```bash
-sudo hb-service add github:franck-boucher/homebridge-sector-alarm
+sudo hb-shell
+cd /var/lib/homebridge
+npm install github:franck-boucher/homebridge-sector-alarm
 ```
 
-Le script `prepare` compile le TypeScript au moment de l’install : pas besoin d’avoir le dossier `dist` dans Git.
+Ou dans l’UI Homebridge : Developer Tools → Terminal (sans `sudo`) :
+
+```bash
+cd /var/lib/homebridge
+npm install github:franck-boucher/homebridge-sector-alarm
+```
+
+Le script `prepare` compile le TypeScript au moment de l’install : pas besoin d’avoir le dossier `dist` dans Git. Quitte `hb-shell` avec Ctrl+D, puis redémarre :
+
+```bash
+sudo hb-service restart
+```
 
 **2. Configurer** : Plugins → Sector Alarm → Settings. Renseigne l’email et le mot de passe Mes Pages, plus le code PIN du clavier.
 
 **3. Redémarrer** Homebridge si ce n’est pas déjà fait, puis ajouter les accessoires dans l’app Maison.
 
-Vérifie dans l’UI (carte Status) que Node.js est en **22** ou **24** — c’est ce que le plugin exige.
-
-Si `hb-service add github:…` échoue (souvent parce que TypeScript n’est pas compilé), clone, compile, puis installe le paquet local :
+Si l’install GitHub échoue (souvent parce que TypeScript n’est pas compilé), clone, compile, puis installe le paquet local **avec `npm`**, pas `hb-service add` :
 
 ```bash
 cd /tmp
@@ -52,20 +65,26 @@ sudo hb-shell   # utilise le Node de Homebridge (/opt/homebridge), pas celui du 
 npm install
 npm run build
 npm pack
-# quitte hb-shell (Ctrl+D), puis :
-sudo hb-service add /tmp/homebridge-sector-alarm/homebridge-sector-alarm-0.1.0.tgz
+cd /var/lib/homebridge
+npm install /tmp/homebridge-sector-alarm/homebridge-sector-alarm-0.1.0.tgz
 ```
+
+Quitte `hb-shell` (Ctrl+D), puis `sudo hb-service restart`.
 
 ### Publier sur npm (optionnel)
 
-Utile seulement si tu veux que le plugin apparaisse dans la recherche de l’UI. Il faut un compte [npmjs.com](https://www.npmjs.com/), puis depuis une machine de dev :
+Utile seulement si tu veux que le plugin apparaisse dans la recherche de l’UI, et pour pouvoir ensuite utiliser `hb-service add homebridge-sector-alarm`. Il faut un compte [npmjs.com](https://www.npmjs.com/), puis depuis une machine de dev :
 
 ```bash
 npm login
 npm publish
 ```
 
-Ensuite, sur le Pi : Plugins → rechercher `homebridge-sector-alarm` → Install.
+Ensuite, sur le Pi : Plugins → rechercher `homebridge-sector-alarm` → Install. Ou :
+
+```bash
+sudo hb-service add homebridge-sector-alarm
+```
 
 ### En local, pour développer
 
