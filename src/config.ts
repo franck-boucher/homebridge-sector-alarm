@@ -12,6 +12,8 @@ export interface SectorPlatformConfig extends PlatformConfig {
   exposePlugs?: boolean;
   exposeLocks?: boolean;
   exposeClimate?: boolean;
+  allowDisarm?: boolean;
+  allowLockControl?: boolean;
 }
 
 export interface ResolvedSectorConfig {
@@ -25,6 +27,8 @@ export interface ResolvedSectorConfig {
   exposePlugs: boolean;
   exposeLocks: boolean;
   exposeClimate: boolean;
+  allowDisarm: boolean;
+  allowLockControl: boolean;
 }
 
 export function resolveConfig(config: SectorPlatformConfig): ResolvedSectorConfig | string {
@@ -37,6 +41,9 @@ export function resolveConfig(config: SectorPlatformConfig): ResolvedSectorConfi
   }
   if (!code) {
     return 'code is required (panel / keypad PIN).';
+  }
+  if (!/^\d{4,10}$/.test(code)) {
+    return 'code must be 4–10 digits (panel / keypad PIN).';
   }
 
   const pollInterval = Number(config.pollInterval ?? DEFAULT_POLL_INTERVAL_S);
@@ -55,5 +62,7 @@ export function resolveConfig(config: SectorPlatformConfig): ResolvedSectorConfi
     exposePlugs: config.exposePlugs !== false,
     exposeLocks: config.exposeLocks !== false,
     exposeClimate: config.exposeClimate !== false,
+    allowDisarm: config.allowDisarm !== false,
+    allowLockControl: config.allowLockControl !== false,
   };
 }

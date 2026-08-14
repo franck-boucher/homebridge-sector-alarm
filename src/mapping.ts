@@ -44,8 +44,10 @@ export function homeKitTargetToArmMode(target: number): 'full' | 'partial' | 'di
   case HomeKitAlarmState.StayArm:
   case HomeKitAlarmState.NightArm:
     return 'partial';
-  default:
+  case HomeKitAlarmState.Disarmed:
     return 'disarm';
+  default:
+    throw new Error(`Unsupported HomeKit alarm target: ${target}`);
   }
 }
 

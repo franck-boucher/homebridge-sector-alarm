@@ -95,7 +95,9 @@ Puis, dans le dossier Homebridge (`/var/lib/homebridge` sur le Pi) : `npm link h
       "exposeSensors": true,
       "exposePlugs": true,
       "exposeLocks": true,
-      "exposeClimate": true
+      "exposeClimate": true,
+      "allowDisarm": true,
+      "allowLockControl": true
     }
   ]
 }
@@ -104,13 +106,15 @@ Puis, dans le dossier Homebridge (`/var/lib/homebridge` sur le Pi) : `npm link h
 | Champ | Obligatoire | Description |
 | --- | --- | --- |
 | `email` / `password` | oui | Identifiants Mes Pages |
-| `code` | oui | Code PIN du clavier (armement, désarmement, serrures) |
+| `code` | oui | Code PIN du clavier (armement, désarmement, serrures), 4 à 10 chiffres |
 | `panelId` | si plusieurs sites | ID du panneau. Laissé vide s’il n’y a qu’un site. |
 | `pollInterval` | non | Rafraîchissement alarme / capteurs / prises / serrures, en secondes (défaut 60, min 15) |
 | `exposeSensors` | non | Portes / fenêtres, fuites, fumée (défaut `true`) |
 | `exposePlugs` | non | Prises connectées (défaut `true`) |
 | `exposeLocks` | non | Serrures (défaut `true`) |
 | `exposeClimate` | non | Température / humidité (défaut `true`, poll 15 min) |
+| `allowDisarm` | non | Autoriser HomeKit à désarmer (défaut `true`). Mettre `false` pour n’autoriser que l’armement / le statut. |
+| `allowLockControl` | non | Autoriser HomeKit à verrouiller / déverrouiller (défaut `true`) |
 
 ## Accessoires HomeKit
 
@@ -140,6 +144,35 @@ Le panneau hors ligne est signalé via **Status Fault**. Sector renvoie parfois 
 - Les caméras ne sont pas exposées (endpoint HouseCheck caméras cassé côté API).
 - Les panneaux « legacy » n’ont pas les capteurs HouseCheck (portes / fenêtres).
 - Un polling trop fréquent a déjà retardé les notifications de l’app officielle : rester sur 60 s ou plus.
+
+## Sécurité
+
+Ce plugin **n’ouvre aucun port** et n’expose pas d’API HTTP. Il parle en HTTPS sortant vers `mypagesapi.sectoralarm.net`, et Homebridge expose l’alarme à HomeKit via HAP (chiffré, appairage obligatoire).
+
+### Est-ce qu’on peut se faire pirater depuis Internet ?
+
+Pas via ce plugin directement. Un attaquant externe devrait passer par un de ces chemins :
+
+1. **Apple Maison** — si tu as un hub (HomePod, Apple TV, iPad) et que le foyer est partagé, n’importe quel membre du foyer HomeKit peut commander l’alarme à distance. L’app Maison demande en général Face ID / code pour désarmer un *Security System*, mais les automations et certaines apps tierce peuvent contourner ce prompt.
+2. **UI Homebridge exposée** (port 8581) — si l’interface est ouverte sur Internet sans mot de passe fort (ou sans HTTPS), quelqu’un peut lire `config.json` (email, mot de passe Mes Pages, **PIN clavier**) et tout commander.
+3. **Compte Mes Pages volé** — le plugin se connecte avec email + mot de passe seulement (login API historique). Le PIN clavier est ensuite envoyé automatiquement.
+
+Le plugin ne contourne pas le cloud Sector : désarmer depuis HomeKit envoie le PIN stocké à l’API officielle, comme l’app Mes Pages.
+
+### Si quelqu’un a accès au Raspberry Pi
+
+**Oui : il peut désarmer l’alarme, ouvrir les serrures, et voler le compte.** Les secrets sont en clair dans `/var/lib/homebridge/config.json` (`email`, `password`, `code`). Accès SSH, sauvegarde Homebridge, ou session UI = mêmes secrets. `allowDisarm: false` ne protège **pas** contre ça : l’attaquant peut relire le PIN et appeler Sector tout seul.
+
+Traite le Pi comme un clavier d’alarme :
+
+- Pas de port forwarding de Homebridge / SSH vers Internet.
+- Mot de passe (ou clés) SSH fort, UI Homebridge authentifiée.
+- Ne pas activer le *insecure accessory control* de Homebridge (`-I`) : ça permet de commander les accessoires sans appairage HomeKit.
+- Permissions restrictives sur `config.json` (`chmod 600`).
+- Compte Mes Pages dédié si Sector le permet, mot de passe unique.
+- Optionnel : `"allowDisarm": false` si tu veux voir l’état dans Maison sans pouvoir désarmer depuis HomeKit (le clavier Sector reste le seul moyen de désarmer).
+
+Un appareil sur le Wi‑Fi **sans** appairage HomeKit et **sans** accès au Pi ne peut pas commander l’alarme via ce plugin : HAP refuse les clients non pairés.
 
 ## Licence
 

@@ -29,12 +29,13 @@ export class AlarmAccessory {
         Characteristic.SecuritySystemTargetState.STAY_ARM,
         Characteristic.SecuritySystemTargetState.AWAY_ARM,
         Characteristic.SecuritySystemTargetState.NIGHT_ARM,
-        Characteristic.SecuritySystemTargetState.DISARM,
       ]
       : [
         Characteristic.SecuritySystemTargetState.AWAY_ARM,
-        Characteristic.SecuritySystemTargetState.DISARM,
       ];
+    if (this.platform.config.allowDisarm) {
+      validTargets.push(Characteristic.SecuritySystemTargetState.DISARM);
+    }
 
     service.getCharacteristic(Characteristic.SecuritySystemTargetState)
       .setProps({ validValues: validTargets })
@@ -60,13 +61,27 @@ export class AlarmAccessory {
   private async setTargetState(value: CharacteristicValue): Promise<void> {
     const { Characteristic } = this.platform;
     const service = this.accessory.getService(this.platform.Service.SecuritySystem)!;
-    const mode = homeKitTargetToArmMode(value as number);
+    let mode: 'full' | 'partial' | 'disarm';
+    try {
+      mode = homeKitTargetToArmMode(value as number);
+    } catch {
+      throw new this.platform.api.hap.HapStatusError(
+        this.platform.api.hap.HAPStatus.INVALID_VALUE_IN_REQUEST,
+      );
+    }
     const alarm = this.platform.coordinator.snapshot?.alarm;
     const code = this.platform.config.code;
 
     if (alarm && !alarm.online) {
       throw new this.platform.api.hap.HapStatusError(
         this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE,
+      );
+    }
+
+    if (mode === 'disarm' && !this.platform.config.allowDisarm) {
+      this.platform.log.warn('Rejected HomeKit disarm (allowDisarm is false)');
+      throw new this.platform.api.hap.HapStatusError(
+        this.platform.api.hap.HAPStatus.INSUFFICIENT_AUTHORIZATION,
       );
     }
 

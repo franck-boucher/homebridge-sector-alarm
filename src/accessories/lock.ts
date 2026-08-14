@@ -60,6 +60,12 @@ export class LockAccessory {
   private async setTargetState(value: CharacteristicValue): Promise<void> {
     const { Characteristic } = this.platform;
     const locked = value === Characteristic.LockTargetState.SECURED;
+    if (!this.platform.config.allowLockControl) {
+      this.platform.log.warn('Rejected HomeKit lock change (allowLockControl is false)');
+      throw new this.platform.api.hap.HapStatusError(
+        this.platform.api.hap.HAPStatus.INSUFFICIENT_AUTHORIZATION,
+      );
+    }
     try {
       await this.platform.client.setLock(this.accessory.context.serialNo, locked, this.platform.config.code);
       await this.platform.coordinator.refresh(false);

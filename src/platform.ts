@@ -40,6 +40,12 @@ export class SectorPlatform implements DynamicPlatformPlugin {
     this.coordinator = new SectorCoordinator(this.log, this.client, resolved);
 
     this.log.info('Sector Alarm platform initializing');
+    if (!resolved.allowDisarm) {
+      this.log.info('HomeKit disarm is disabled (allowDisarm=false)');
+    }
+    if (!resolved.allowLockControl) {
+      this.log.info('HomeKit lock control is disabled (allowLockControl=false)');
+    }
 
     this.api.on('didFinishLaunching', () => {
       this.discoverDevices().catch((error: unknown) => {

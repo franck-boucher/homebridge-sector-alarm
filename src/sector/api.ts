@@ -23,6 +23,34 @@ function parseJwtExp(token: string): number {
   }
 }
 
+/** Truncate and redact secrets from API error bodies before they reach logs. */
+export function summarizeHttpErrorBody(text: string): string {
+  const redacted = text.replace(
+    /("(?:AuthorizationToken|Password|PanelCode|UserId)"\s*:\s*")[^"]*(")/gi,
+    '$1[redacted]$2',
+  );
+  const compact = redacted.replace(/\s+/g, ' ').trim();
+  if (!compact) {
+    return '';
+  }
+  return compact.length > 180 ? `${compact.slice(0, 180)}…` : compact;
+}
+
+function describeHttpError(method: string, url: string, status: number, body = ''): string {
+  const summary = summarizeHttpErrorBody(body);
+  const prefix = `${method} ${url} (HTTP ${status})`;
+  return summary ? `${prefix}: ${summary}` : prefix;
+}
+
+function sectorFetch(url: string, init: RequestInit): Promise<Response> {
+  return fetch(url, {
+    ...init,
+    redirect: 'error',
+    credentials: 'omit',
+    signal: init.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
+}
+
 export class SectorApi {
   private token?: string;
   private tokenExpiresAt = 0;
@@ -164,7 +192,7 @@ export class SectorApi {
       headers.Authorization = `Bearer ${await this.getToken()}`;
     }
 
-    const response = await fetch(options.url, {
+    const response = await sectorFetch(options.url, {
       method: options.method,
       headers,
       body: options.body === undefined || options.body === null
@@ -187,7 +215,7 @@ export class SectorApi {
     if (response.status === 400) {
       const text = await response.text();
       throw new SectorApiError(
-        `Bad request during ${options.method} ${options.url} (HTTP 400): ${text}`,
+        `Bad request during ${describeHttpError(options.method, options.url, 400, text)}`,
         400,
       );
     }
@@ -195,7 +223,7 @@ export class SectorApi {
     if (!response.ok) {
       const text = await response.text();
       throw new SectorApiError(
-        `Request failed during ${options.method} ${options.url} (HTTP ${response.status}): ${text}`,
+        `Request failed during ${describeHttpError(options.method, options.url, response.status, text)}`,
         response.status,
       );
     }
@@ -229,7 +257,7 @@ export class SectorApi {
   }
 
   private async renewToken(): Promise<string> {
-    const response = await fetch(`${API_URL}/api/Login/Login`, {
+    const response = await sectorFetch(`${API_URL}/api/Login/Login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ UserId: this.email, Password: this.password }),
@@ -244,7 +272,10 @@ export class SectorApi {
     }
     if (!response.ok) {
       const text = await response.text();
-      throw new SectorApiError(`Unable to login (HTTP ${response.status}): ${text}`, response.status);
+      throw new SectorApiError(
+        `Unable to login (${describeHttpError('POST', `${API_URL}/api/Login/Login`, response.status, text)})`,
+        response.status,
+      );
     }
 
     const json = await response.json() as { AuthorizationToken?: string };

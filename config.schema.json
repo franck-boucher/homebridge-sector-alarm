@@ -23,13 +23,20 @@
       "password": {
         "title": "Password",
         "type": "string",
-        "description": "Mes Pages password (not the keypad PIN).",
-        "placeholder": "password"
+        "description": "Mes Pages password (not the keypad PIN). Stored in Homebridge config.json.",
+        "placeholder": "password",
+        "x-schema-form": {
+          "type": "password"
+        }
       },
       "code": {
         "title": "Panel code",
         "type": "string",
-        "description": "Keypad / panel PIN used to arm, disarm, lock and unlock."
+        "pattern": "^[0-9]{4,10}$",
+        "description": "Keypad / panel PIN used to arm, disarm, lock and unlock. Stored in Homebridge config.json.",
+        "x-schema-form": {
+          "type": "password"
+        }
       },
       "panelId": {
         "title": "Panel ID",
@@ -63,6 +70,18 @@
         "title": "Expose temperature and humidity",
         "type": "boolean",
         "default": true
+      },
+      "allowDisarm": {
+        "title": "Allow HomeKit to disarm",
+        "type": "boolean",
+        "default": true,
+        "description": "If disabled, HomeKit can still arm and show status, but cannot disarm. Does not protect against someone who can read the Homebridge config file."
+      },
+      "allowLockControl": {
+        "title": "Allow HomeKit to lock / unlock",
+        "type": "boolean",
+        "default": true,
+        "description": "If disabled, lock state is still shown but HomeKit cannot lock or unlock."
       }
     }
   }
