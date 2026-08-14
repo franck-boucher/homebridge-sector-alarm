@@ -2,8 +2,12 @@
  * Sector panel Status codes (same mapping as gjohansson-ST/sector for Home Assistant):
  * 1 = disarmed, 2 = partial / home, 3 = armed away, 0 = unknown.
  *
- * HomeKit SecuritySystem:
- * STAY_ARM = 0, AWAY_ARM = 1, NIGHT_ARM = 2, DISARMED = 3, ALARM_TRIGGERED = 4
+ * HomeKit SecuritySystem always uses Apple's labels (Home / Away / Night / Off).
+ * Sector only has three modes, so Night is not exposed in the Home app:
+ *   Disarmed (1) → Off
+ *   Partial  (2) → Home (Stay)
+ *   Armed    (3) → Away
+ * Night is still accepted as a target (maps to partial) in case a client sends it.
  */
 export const SectorAlarmStatus = {
   Unknown: 0,
@@ -19,6 +23,19 @@ export const HomeKitAlarmState = {
   Disarmed: 3,
   AlarmTriggered: 4,
 } as const;
+
+/** Target states shown in Home: Home + Away + Off, or Away + Off if partial arm is unavailable. */
+export function homeKitValidTargetStates(canPartialArm: boolean): number[] {
+  if (canPartialArm) {
+    return [HomeKitAlarmState.StayArm, HomeKitAlarmState.AwayArm, HomeKitAlarmState.Disarmed];
+  }
+  return [HomeKitAlarmState.AwayArm, HomeKitAlarmState.Disarmed];
+}
+
+/** Current states: same as targets, plus Alarm Triggered (HomeKit-only, not a Sector mode). */
+export function homeKitValidCurrentStates(canPartialArm: boolean): number[] {
+  return [...homeKitValidTargetStates(canPartialArm), HomeKitAlarmState.AlarmTriggered];
+}
 
 export function sectorStatusToCurrentState(status: number, online: boolean, previous?: number): number {
   if (!online && previous !== undefined) {
