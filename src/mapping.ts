@@ -3,11 +3,13 @@
  * 1 = disarmed, 2 = partial / home, 3 = armed away, 0 = unknown.
  *
  * HomeKit SecuritySystem always uses Apple's labels (Home / Away / Night / Off).
- * Sector only has three modes, so Night is not exposed in the Home app:
+ * Sector only has three modes:
  *   Disarmed (1) → Off
- *   Partial  (2) → Home (Stay)
+ *   Partial  (2) → Home (Stay) and Night (alias)
  *   Armed    (3) → Away
- * Night is still accepted as a target (maps to partial) in case a client sends it.
+ * Night must stay in validValues when partial arm is available. HAP rejects
+ * writes that are not listed before setTargetState runs, so omitting NightArm
+ * would make the Night → partial mapping unreachable.
  */
 export const SectorAlarmStatus = {
   Unknown: 0,
@@ -24,10 +26,15 @@ export const HomeKitAlarmState = {
   AlarmTriggered: 4,
 } as const;
 
-/** Target states shown in Home: Home + Away + Off, or Away + Off if partial arm is unavailable. */
+/** Target states advertised to HomeKit. Night is listed with Stay when partial arm is available so HAP accepts Night writes. */
 export function homeKitValidTargetStates(canPartialArm: boolean): number[] {
   if (canPartialArm) {
-    return [HomeKitAlarmState.StayArm, HomeKitAlarmState.AwayArm, HomeKitAlarmState.Disarmed];
+    return [
+      HomeKitAlarmState.StayArm,
+      HomeKitAlarmState.AwayArm,
+      HomeKitAlarmState.NightArm,
+      HomeKitAlarmState.Disarmed,
+    ];
   }
   return [HomeKitAlarmState.AwayArm, HomeKitAlarmState.Disarmed];
 }

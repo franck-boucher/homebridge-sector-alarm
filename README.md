@@ -135,7 +135,7 @@ Puis, dans le dossier Homebridge (`/var/lib/homebridge` sur le Pi) : `npm link h
 
 | Sector | HomeKit | Notes |
 | --- | --- | --- |
-| Panneau d’alarme | Security System | 3 modes Sector, libellés HomeKit : Désactivé, Au domicile (partiel), Absent (total). |
+| Panneau d’alarme | Security System | 3 modes Sector, libellés HomeKit : Désactivé, Au domicile (partiel), Nuit (partiel), Absent (total). |
 | Portes / fenêtres | Contact Sensor | HouseCheck, panneaux récents |
 | Prises | Outlet | État cloud, mise à jour au poll suivant |
 | Serrures | Lock | Utilise le `code` configuré |
@@ -146,15 +146,13 @@ Le panneau hors ligne est signalé via **Status Fault**. Sector renvoie parfois 
 
 ## États d’alarme
 
-HomeKit impose ses propres noms sur le service *Security System* (en français : **Au domicile**, **Absent**, **Nuit**, **Désactivé**). On ne peut pas les renommer en « Activation totale / partielle ». Sector n’a que 3 modes, donc **Nuit n’est pas proposé** dans l’app Maison.
+HomeKit impose ses propres noms sur le service *Security System* (en français : **Au domicile**, **Absent**, **Nuit**, **Désactivé**). On ne peut pas les renommer en « Activation totale / partielle ». Sector n’a que 3 modes : **Nuit** arme en partiel, comme **Au domicile**. Nuit reste proposé dans Maison : HomeKit refuse l’écriture si le mode n’est pas annoncé comme valide.
 
 | Sector | HomeKit |
 | --- | --- |
 | Désactivé (`1`) | Désactivé (Off) |
-| Activation partielle (`2`) | Au domicile (Home / Stay) |
+| Activation partielle (`2`) | Au domicile (Home / Stay) et Nuit (Night) |
 | Activation totale (`3`) | Absent (Away) |
-
-Si un client HomeKit envoie quand même « Nuit » (certaines versions de l’app Maison l’affichent malgré tout), le plugin arme en partiel — la même action que « Au domicile ». Après mise à jour du plugin, redémarrer Homebridge ; si Nuit reste affiché, retirer l’accessoire alarme de Maison puis le ré-ajouter.
 
 ## Limites
 
